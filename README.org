@@ -1,5 +1,2 @@
-* Wasmcloud01 
-
-** Usage
-
-** Installation
+#+title: How to build a Manifest on Wasmcloud
+* Introduction 
