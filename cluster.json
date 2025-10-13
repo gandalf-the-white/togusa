@@ -1,0 +1,19 @@
+{
+  "cluster": {
+    "name": "edge-analytics-cluster",
+    "hosts": [
+      {
+        "name": "core-1",
+        "role": "node",
+        "region": "eu-west",
+        "zone": "eu-west-1a"
+      },
+      {
+        "name": "edge-fr",
+        "role": "leaf",
+        "region": "eu-west",
+        "zone": "eu-west-1c"
+      }
+    ]
+  }
+}

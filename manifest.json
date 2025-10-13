@@ -1,0 +1,300 @@
+{
+  "apiVersion": "core.oam.dev/v1alpha2",
+  "kind": "Application",
+  "metadata": {
+    "name": "edge-analytics-cluster"
+  },
+  "spec": [
+    [
+      "components",
+      {
+        "name": "http-api",
+        "type": "actor",
+        "properties": {
+          "image": "ghcr.io/acme/http-api:1.0"
+        },
+        "traits": [
+          {
+            "type": "scaler",
+            "properties": {
+              "min": 2,
+              "max": 5
+            }
+          },
+          {
+            "type": "spread",
+            "properties": [
+              [
+                "spread",
+                {
+                  "name": "node-eu-west-1a",
+                  "requirements": [
+                    {
+                      "key": "role",
+                      "operator": "In",
+                      "values": ["node"]
+                    },
+                    {
+                      "key": "zone",
+                      "operator": "In",
+                      "values": ["eu-west-1a"]
+                    }
+                  ]
+                },
+                {
+                  "name": "node-eu-west-1c",
+                  "requirements": [
+                    {
+                      "key": "role",
+                      "operator": "In",
+                      "values": ["node"]
+                    },
+                    {
+                      "key": "zone",
+                      "operator": "In",
+                      "values": ["eu-west-1c"]
+                    }
+                  ]
+                },
+                {
+                  "name": "leaf-eu-west-1a",
+                  "requirements": [
+                    {
+                      "key": "role",
+                      "operator": "In",
+                      "values": ["leaf"]
+                    },
+                    {
+                      "key": "zone",
+                      "operator": "In",
+                      "values": ["eu-west-1a"]
+                    }
+                  ]
+                },
+                {
+                  "name": "leaf-eu-west-1c",
+                  "requirements": [
+                    {
+                      "key": "role",
+                      "operator": "In",
+                      "values": ["leaf"]
+                    },
+                    {
+                      "key": "zone",
+                      "operator": "In",
+                      "values": ["eu-west-1c"]
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "name": "ingestor",
+        "type": "actor",
+        "properties": {
+          "image": "ghcr.io/acme/ingestor:0.9"
+        },
+        "traits": [
+          {
+            "type": "scaler",
+            "properties": {
+              "min": 1,
+              "max": 4
+            }
+          },
+          {
+            "type": "spread",
+            "properties": [
+              [
+                "spread",
+                {
+                  "name": "leaf-eu-west-1a",
+                  "requirements": [
+                    {
+                      "key": "role",
+                      "operator": "In",
+                      "values": ["leaf"]
+                    },
+                    {
+                      "key": "zone",
+                      "operator": "In",
+                      "values": ["eu-west-1a"]
+                    }
+                  ]
+                },
+                {
+                  "name": "leaf-eu-west-1c",
+                  "requirements": [
+                    {
+                      "key": "role",
+                      "operator": "In",
+                      "values": ["leaf"]
+                    },
+                    {
+                      "key": "zone",
+                      "operator": "In",
+                      "values": ["eu-west-1c"]
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    [
+      "capabilityProviders",
+      {
+        "name": "redis",
+        "type": "capability",
+        "properties": {
+          "image": "ghcr.io/wasmcloud/keyvalue-redis:0.23",
+          "capabilityId": "wasmcloud:keyvalue"
+        },
+        "traits": [
+          {
+            "type": "spread",
+            "properties": [
+              [
+                "spread",
+                {
+                  "name": "node-eu-west-1a",
+                  "requirements": [
+                    {
+                      "key": "role",
+                      "operator": "In",
+                      "values": ["node"]
+                    },
+                    {
+                      "key": "zone",
+                      "operator": "In",
+                      "values": ["eu-west-1a"]
+                    }
+                  ]
+                },
+                {
+                  "name": "node-eu-west-1c",
+                  "requirements": [
+                    {
+                      "key": "role",
+                      "operator": "In",
+                      "values": ["node"]
+                    },
+                    {
+                      "key": "zone",
+                      "operator": "In",
+                      "values": ["eu-west-1c"]
+                    }
+                  ]
+                },
+                {
+                  "name": "leaf-eu-west-1a",
+                  "requirements": [
+                    {
+                      "key": "role",
+                      "operator": "In",
+                      "values": ["leaf"]
+                    },
+                    {
+                      "key": "zone",
+                      "operator": "In",
+                      "values": ["eu-west-1a"]
+                    }
+                  ]
+                },
+                {
+                  "name": "leaf-eu-west-1c",
+                  "requirements": [
+                    {
+                      "key": "role",
+                      "operator": "In",
+                      "values": ["leaf"]
+                    },
+                    {
+                      "key": "zone",
+                      "operator": "In",
+                      "values": ["eu-west-1c"]
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "name": "httpserver",
+        "type": "capability",
+        "properties": {
+          "image": "ghcr.io/wasmcloud/http-server:0.19",
+          "capabilityId": "wasmcloud:httpserver"
+        },
+        "traits": [
+          {
+            "type": "spread",
+            "properties": [
+              [
+                "spread",
+                {
+                  "name": "leaf-eu-west-1a",
+                  "requirements": [
+                    {
+                      "key": "role",
+                      "operator": "In",
+                      "values": ["leaf"]
+                    },
+                    {
+                      "key": "zone",
+                      "operator": "In",
+                      "values": ["eu-west-1a"]
+                    }
+                  ]
+                },
+                {
+                  "name": "leaf-eu-west-1c",
+                  "requirements": [
+                    {
+                      "key": "role",
+                      "operator": "In",
+                      "values": ["leaf"]
+                    },
+                    {
+                      "key": "zone",
+                      "operator": "In",
+                      "values": ["eu-west-1c"]
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    [
+      "links",
+      {
+        "source": "http-api",
+        "target": "httpserver",
+        "values": {
+          "address": "0.0.0.0:8080"
+        }
+      },
+      {
+        "source": "http-api",
+        "target": "redis",
+        "values": {
+          "URL": "redis://redis:6379"
+        }
+      },
+      {
+        "source": "ingestor",
+        "target": "redis"
+      }
+    ]
+  ]
+}
