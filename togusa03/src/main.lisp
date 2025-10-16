@@ -91,5 +91,4 @@
                          (list :name "eastcoast" :weight 60 :requirements (list :zone "us-east-1"))
                          (list :name "westcoast" :weight 40 :requirements (list :zone "us-west-1")))))
     (wasmcloud:save-manifest-to-db *m2*)
-    )
-  )
+    (save-manifest-json *m2* #P"./spread-app-redeploy.json")))
