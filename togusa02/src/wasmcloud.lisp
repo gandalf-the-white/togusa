@@ -466,34 +466,3 @@
                              :providers (copy-list (manifest-providers m))
                              :links (copy-list (manifest-links m)))))
     copy))
-
-;; =====================
-;; Example
-;; =====================
-
-#+nil
-(defun main ()
-  (let* ((cluster (make-cluster :name "prod-eu" :nats-url "nats://nats.prod:4222"
-                                :nodes (list (make-node :id "host-eu-1" :zone "eu-west-1a" :labels '("x86_64"))
-                                             (make-node :id "host-eu-2" :zone "eu-west-1b"))
-                                :leaves (list (make-leaf :id "edge-paris" :zone "eu-west-1-edge"))))
-         (http (make-provider :name "httpserver" :capability "wasi:http/proxy" :image "ghcr.io/wasmcloud/http-server:0.21.0" :zone "eu-west-1a"))
-         (kv   (make-provider :name "kv" :capability "wasi:keyvalue/store" :image "ghcr.io/wasmcloud/keyvalue-redis:0.11.0" :zone "eu-west-1b"))
-         (comp (make-component :name "hello"
-                               :image "ghcr.io/wasmcloud/components/http-hello-world-rust:0.1.0"
-                               :replicas 3 :zone "eu-west-1a"))
-         (lnk1 (make-link :name "http->hello"
-                          :source "httpserver" :source-interface "wasi:http/outgoing-handler"
-                          :target "hello" :target-interface "wasi:http/incoming-handler"))
-         (lnk2 (make-link :name "hello->kv"
-                          :source "hello" :source-interface "wasi:keyvalue/store"
-                          :target "kv" :target-interface "wasi:keyvalue/store"))
-         (m (make-manifest :name "demo-app" :version "1.0.0" :description "Demo wasmCloud EU"
-                           :cluster cluster)))
-    (manifest-add-provider m http)
-    (manifest-add-provider m kv)
-    (manifest-add-component m comp)
-    (manifest-add-link m lnk1)
-    (manifest-add-link m lnk2)
-    (save-manifest-json m #P"./demo-app.json")
-    ))
