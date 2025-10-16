@@ -1,0 +1,146 @@
+{
+  "api_version": "oam.wasmcloud.dev/v1",
+  "kind": "Application",
+  "metadata": {
+    "name": "demo-app",
+    "version": "1.0.0",
+    "description": "Demo wasmCloud EU"
+  },
+  "cluster": {
+    "name": "prod-eu",
+    "nats_url": "nats://nats.prod:4222",
+    "nodes": [
+      {
+        "id": "host-eu-1",
+        "zone": "eu-west-1a",
+        "labels": [
+          "x86_64"
+        ]
+      },
+      {
+        "id": "host-eu-2",
+        "zone": "eu-west-1b",
+        "labels": null
+      }
+    ],
+    "leaves": [
+      {
+        "id": "edge-paris",
+        "zone": "eu-west-1-edge",
+        "labels": null,
+        "kind": "leaf"
+      }
+    ]
+  },
+  "spec": {
+    "components": [
+      {
+        "name": "http-component",
+        "type": "component",
+        "properties": {
+          "image": "file://./build/http_hello_world_s.wasm"
+        },
+        "traits": [
+          {
+            "type": "placement",
+            "properties": {
+              "zone": "zone-a"
+            }
+          },
+          {
+            "type": "scaler",
+            "properties": {
+              "replicas": 1
+            }
+          },
+          {
+            "type": "spreadscaler",
+            "properties": {
+              "instances": 100,
+              "spread": [
+                {
+                  "name": "eastcoast",
+                  "weight": 80,
+                  "requirements": {
+                    "zone": "us-east-1"
+                  }
+                },
+                {
+                  "name": "westcoast",
+                  "weight": 20,
+                  "requirements": {
+                    "zone": "us-west-1"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "providers": [
+      {
+        "name": "httpserver",
+        "type": "capability",
+        "properties": {
+          "capability": "wasi:http/proxy",
+          "image": "ghcr.io/wasmcloud/http-server:0.21.0"
+        },
+        "traits": [
+          {
+            "type": "placement",
+            "properties": {
+              "zone": "eu-west-1a"
+            }
+          }
+        ]
+      },
+      {
+        "name": "kv",
+        "type": "capability",
+        "properties": {
+          "capability": "wasi:keyvalue/store",
+          "image": "ghcr.io/wasmcloud/keyvalue-redis:0.11.0"
+        },
+        "traits": [
+          {
+            "type": "placement",
+            "properties": {
+              "zone": "eu-west-1b"
+            }
+          }
+        ]
+      }
+    ],
+    "links": [
+      {
+        "name": "http->hello",
+        "type": "link",
+        "properties": {
+          "source": {
+            "name": "httpserver",
+            "interface": "wasi:http/outgoing-handler"
+          },
+          "target": {
+            "name": "hello",
+            "interface": "wasi:http/incoming-handler"
+          }
+        }
+      },
+      {
+        "name": "hello->kv",
+        "type": "link",
+        "properties": {
+          "source": {
+            "name": "hello",
+            "interface": "wasi:keyvalue/store"
+          },
+          "target": {
+            "name": "kv",
+            "interface": "wasi:keyvalue/store"
+          }
+        }
+      }
+    ]
+  }
+}
