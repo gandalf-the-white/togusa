@@ -81,14 +81,16 @@
 
 (defun maindb ()
   (let ((m (create)))
-    (db:init-db)
-    (format t "~a~%" (list (manifest-name m) (manifest-version m) (manifest-description m)))
-    (wasmcloud:save-manifest-to-db m)
-    (defparameter *m2* (wasmcloud:load-manifest-from-db "demo-app"))
-    (setf (wasmcloud:component-config (first (wasmcloud:manifest-components *m2*)))
-          (list :instances 100
-                :spread (list
-                         (list :name "eastcoast" :weight 60 :requirements (list :zone "us-east-1"))
-                         (list :name "westcoast" :weight 40 :requirements (list :zone "us-west-1")))))
-    (wasmcloud:save-manifest-to-db *m2*)
-    (save-manifest-json *m2* #P"./spread-app-redeploy.json")))
+    ;; (db:init-db)
+    (format t "~a" (wasmcloud:manifest->json-string m))))
+
+;; (format t "~a~%" (list (manifest-name m) (manifest-version m) (manifest-description m)))
+;; (wasmcloud:save-manifest-to-db m)
+;; (defparameter *m2* (wasmcloud:load-manifest-from-db "demo-app"))
+;; (setf (wasmcloud:component-config (first (wasmcloud:manifest-components *m2*)))
+;;       (list :instances 100
+;;             :spread (list
+;;                      (list :name "eastcoast" :weight 60 :requirements (list :zone "us-east-1"))
+;;                      (list :name "westcoast" :weight 40 :requirements (list :zone "us-west-1")))))
+;; (wasmcloud:save-manifest-to-db *m2*)
+;; (save-manifest-json *m2* #P"./spread-app-redeploy.json")))

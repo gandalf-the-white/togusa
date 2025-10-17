@@ -16,11 +16,17 @@
 ;;;; JSON Tools
 ;;;; =====================
 
-(defun json-response (obj &key (code 200))
-  (list code '(:content-type "application/json")
-        (list (if (stringp obj)
-                  obj
-                  (encode-json-to-string obj :indent t)))))
+;; (defun json-response (obj &key (code 200))
+;;   (list code '(:content-type "application/json")
+;;         (list (if (stringp obj)
+;;                   obj
+;;                   (encode-json-to-string obj)))))
+
+;; (defun json-response (obj &key (code 200))
+;;  (setf (reply-content-type) "application/json")
+;;  (list code
+;;        '(:content-type "application/json")
+;;        (list (jzon:stringify obj))))
 
 ;;;; =====================
 ;;;; Easy Routes
@@ -30,8 +36,8 @@
                                 :address "127.0.0.1"
                                 :port +default-port+))
 
-(defroute hello ("/" :method :GET) ()
-  (format nil "Welcome to the wasmcloud orchestrator!"))
+;; (defroute hello ("/" :method :GET) ()
+;; (format nil "Welcome to the wasmcloud orchestrator!"))
 
 (defroute create-manifest ("/manifest" :method :POST) ()
   (setf (hunchentoot:content-type*) "application/json")
@@ -48,15 +54,33 @@
         (wasmcloud:save-manifest-to-db m)))
     (jzon:stringify response)))
 
-(defroute get-manifest ("/manifest" :method :GET) ()
-  (let ((name (hunchentoot:get-parameters* "name")))
-    (json-response (list :status "ok" :name name) :code 200)))
-;; (handler-case
-;;     (let ((m (wasmcloud:load-manifest-from-db name)))
-;;       ;; (json-response (wasmcloud:manifest->json-string m))
-;;       (json-response (list :status "created" :name name) :code 201))
-;;   (error (e)
-;;     (json-response (list :error (format nil "Manifest not found: ~A" e)) :code 404))))))
+(defroute get-manifest ("/manifest/:name" :method :GET)
+    (&path (name 'string))
+  (let ((m (wasmcloud:load-manifest-from-db name)))
+    (setf (hunchentoot:content-type*) "application/json")
+    (wasmcloud:manifest->json-string m)))
+
+(defroute update-manifest ("/manifest" :method :PATCH) ()
+  (setf (hunchentoot:content-type*) "application/json")
+  (let* ((body (jzon:parse (hunchentoot:raw-post-data)))
+         (name (gethash "name" body))
+         (m (wasmcloud:load-manifest-from-db name)))
+    (dolist (c (manifest-components m))
+      (let ((config (component-config c)))
+        ;; Met à jour le nombre d’instances
+        (when (gethash "instances" body)
+          (setf (getf config :instances) (gethash "instances" body)))
+        ;; Met à jour la répartition du spread
+        (when (gethash "spread" body)
+          (setf (getf config :spread)
+                (mapcar (lambda (s)
+                          (list
+                           :name (gethash "name" s)
+                           :weight (gethash "weight" s)
+                           :requirements (list :zone (gethash "zone" (gethash "requirements" s)))))
+                        (gethash "spread" body))))))
+    (wasmcloud:save-manifest-to-db m)
+    (json-response (list :status "updated"))))
 
 ;;;; =====================
 ;;;; Handle Server

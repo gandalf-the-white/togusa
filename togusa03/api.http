@@ -11,4 +11,25 @@ Content-Type: application/json
 }
 
 #GET name
-GET http://localhost:8080/manifest?name='demo-api'
+GET http://localhost:8080/manifest/demo-api
+
+#PATCH name
+PATCH http://localhost:8080/manifest/demo-api
+Content-Type: application/json
+{
+    "name": "demo-api",
+    "spread": [
+    {
+        "name": "eastcoast",
+        "weight": 80,
+        "requirements": {
+        "zone": "us-east-1"
+        }
+    },{
+        "name": "westcoast",
+        "weight": 20,
+        "requirements": {
+        "zone": "us-west-1"
+        }
+    }]
+}
