@@ -55,22 +55,20 @@
     (jzon:stringify response)))
 
 (defroute get-manifest ("/manifest/:name" :method :GET)
-    (&path (name 'string))
+  (&path (name 'string))
   (let ((m (wasmcloud:load-manifest-from-db name)))
     (setf (hunchentoot:content-type*) "application/json")
     (wasmcloud:manifest->json-string m)))
 
-(defroute update-manifest ("/manifest" :method :PATCH) ()
+(defroute update-manifest ("/manifest/:name" :method :PATCH)
+  (&path (name 'string))
   (setf (hunchentoot:content-type*) "application/json")
   (let* ((body (jzon:parse (hunchentoot:raw-post-data)))
-         (name (gethash "name" body))
          (m (wasmcloud:load-manifest-from-db name)))
     (dolist (c (manifest-components m))
       (let ((config (component-config c)))
-        ;; Met à jour le nombre d’instances
         (when (gethash "instances" body)
           (setf (getf config :instances) (gethash "instances" body)))
-        ;; Met à jour la répartition du spread
         (when (gethash "spread" body)
           (setf (getf config :spread)
                 (mapcar (lambda (s)

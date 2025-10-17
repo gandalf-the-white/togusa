@@ -17,7 +17,7 @@ GET http://localhost:8080/manifest/demo-api
 PATCH http://localhost:8080/manifest/demo-api
 Content-Type: application/json
 {
-    "name": "demo-api",
+    "instances": 100,
     "spread": [
     {
         "name": "eastcoast",
