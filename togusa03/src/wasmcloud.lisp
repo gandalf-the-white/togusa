@@ -3,7 +3,7 @@
   (:export :make-cluster :make-node :make-leaf :make-provider :make-component :make-link :make-manifest
    :manifest-add-provider :manifest-add-component :manifest-add-link :save-manifest-json :load-manifest-json
            :save-manifest-to-db :load-manifest-from-db :manifest :manifest-components
-           :manifest-name :manifest-version :manifest-description :component-config))
+           :manifest-name :manifest-version :manifest-description :component-config :manifest->json-string))
 
 (in-package :wasmcloud)
 

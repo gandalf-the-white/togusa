@@ -5,11 +5,16 @@
   :author ""
   :license ""
   :depends-on (cl-json
-               sqlite)
+               sqlite
+               hunchentoot
+               easy-routes
+               clack
+               com.inuoe.jzon)
   :components ((:module "src"
                 :components
                 ((:file "db")
                  (:file "wasmcloud")
+                 (:file "api")
                  (:file "main"))))
   :description ""
   :in-order-to ((test-op (test-op "togusa/tests"))))

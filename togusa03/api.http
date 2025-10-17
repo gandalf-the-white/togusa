@@ -1,0 +1,14 @@
+# GET test
+GET http://localhost:8080/
+
+# POST create a new manifest
+POST http://localhost:8080/manifest
+Content-Type: application/json
+{
+    "name": "demo-api",
+    "version": "0.1.0",
+    "description": "create manifest with easy-routes"
+}
+
+#GET name
+GET http://localhost:8080/manifest?name='demo-api'
