@@ -1,4 +1,8 @@
-#+title: Wasmcloud on Lisp
+#+TITLE: Wasmcloud on Lisp
+#+AUTHOR: Spike Spiegel
+#+INTRODUCTION: Propose to build a wasmcloud manifest with LISP
+
+
 * Introduction
 * Diagram
 #+begin_src plantuml :file ./images/diagram.svg
