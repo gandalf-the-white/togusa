@@ -8,27 +8,48 @@
 #+begin_src plantuml :file ./images/diagram.svg
 !theme spacelab
 scale 0.8
+manifest *-- cluster
+manifest *-- components
+components o-- component
+components o-- capability
 instance <|-- component
 instance <|-- capability
-instance *-- trait
-trait <|-- spreadscaler
-trait <|-- link
+component *-- spreadscaler
+component *-- link
+capability *-- link
 spreadscaler *-- spread
+node <|-- worker
+node <|-- leaf
+cluster o-- worker
+cluster o-- leaf
+
+node : id
+node : zone
+node : []labels
+
+cluster : name
+cluster : nats-url
+cluster : []workers
+cluster : []leafs
+
 instance : name
 instance : image
 instance : []traits
-trait : type
+
+component : replicas
+
+spreadscaler : instances
+spreadscaler : []spread properties
+
 spread : name
 spread : weight
 spread : zone
-component : replicas
-spreadscaler : instances
-spreadscaler : []properties
+
 link : target
 link : namespace
 link : []interfaces
-link : target_config
 link : source_config
+link : target_config
 #+end_src
 
 #+RESULTS:
