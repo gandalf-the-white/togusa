@@ -189,8 +189,20 @@
               :type string)
    (interfaces :initarg :interfaces
                :accessor interfaces
-               :type list))
+               :type list)
+   (source :initarg :source
+           :accessor source
+           :type CONFIG))
   (:documentation "Define the target connection"))
+
+(defclass config ()
+  ((name :initarg :name
+         :accessor name
+         :type string)
+   (address :initarg :address
+            :accessor address
+            :type string))
+  (:documentation "Define the configuration for a link"))
 
 (defmethod make-spreadscaler (&key instances spread)
   (make-instance 'spreadscaler :instances instances
@@ -201,11 +213,16 @@
                          :weight weight
                          :zone zone))
 
-(defmethod make-link (&key target pack namespace interfaces)
+(defmethod make-link (&key target pack namespace interfaces source)
   (make-instance 'link :target target
                        :pack pack
                        :namespace namespace
-                       :interfaces interfaces))
+                       :interfaces interfaces
+                       :source source))
+
+(defmethod make-config (&key name address)
+  (make-instance 'config :name name :address address))
+
 
 (defmethod to-json ((s spreadscaler))
   (make-json-object :type "spreadscaler"
@@ -219,11 +236,18 @@
                     :requirement (list :zone (zone s))))
 
 (defmethod to-json ((l link))
-  (make-json-object :type "link"
-                    :properties (list :target (target l)
-                                      :namespace (namespace l)
-                                      :package (pack l)
-                                      :interfaces (interfaces l))))
+  (let ((properties (append (list :target (target l)
+                                  :namespace (namespace l)
+                                  :package (pack l)
+                                  :interfaces (interfaces l))
+                            (if (source l)
+                                (list :source (to-json (source l)))))))
+    (make-json-object :type "link"
+                      :properties properties)))
+
+(defmethod to-json ((c config))
+  (make-json-object :config (list :name (name c)
+                                  :properties (list :address (address c)))))
 
 ;; ================================================
 ;;  M A N I F E S T
@@ -283,15 +307,24 @@
          (spreads (list (make-spread :name "eastcost" :weight 80 :zone "us-eastcost")
                         (make-spread :name "westcost" :weight 20 :zone "us-westcost")))
          (spreadscaler (make-spreadscaler :instances 100 :spread spreads))
-         (link (make-link :target "Http-component" :pack "http" :namespace "wasi" :interfaces (list "incoming-handler")))
+         (config (make-config :name "default-http" :address "127.0.0.1"))
+         (link (make-link :target "Http-component"
+                          :pack "http"
+                          :namespace "wasi"
+                          :interfaces (list "incoming-handler")
+                          :source config))
          (manifest (make-manifest :cluster cluster :name "wasmcloud"
                                   :components (list (make-component :name "Http-component"
                                                                     :replicas 4
                                                                     :image "ghcr.io/wasmcloud/components/dog-fetcher-rust:0.1.1"
-                                                                    :traits (list spreadscaler))
+                                                                    :traits (list spreadscaler
+                                                                                  (make-link :target "Httpserver"
+                                                                                             :pack "http"
+                                                                                             :namespace "wasi"
+                                                                                             :interfaces (list "outgoing-handler"))))
                                                     (make-capability :name "Httpserver"
                                                                      :image "ghcr.io/wasmcloud/http-server:0.27.0"
                                                                      :traits (list link))))))
     (format t "manifest: ~a" manifest)
     (save-manifest manifest "../datas/save.json") 
-    manifest))
+    link))

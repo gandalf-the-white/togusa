@@ -18,6 +18,7 @@ component *-- spreadscaler
 component *-- link
 capability *-- link
 spreadscaler *-- spread
+link *-- config
 node <|-- worker
 node <|-- leaf
 cluster o-- worker
@@ -48,8 +49,10 @@ spread : zone
 link : target
 link : namespace
 link : []interfaces
-link : source_config
-link : target_config
+link : source
+
+config : name
+config : address
 #+end_src
 
 #+RESULTS:
