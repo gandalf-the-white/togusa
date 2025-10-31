@@ -28,3 +28,4 @@ link : source_config
 #+end_src
 
 #+RESULTS:
+[[file:./images/diagram.svg]]
