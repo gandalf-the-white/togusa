@@ -4,7 +4,8 @@
   :version "0.0.1"
   :author ""
   :license ""
-  :depends-on (cl-json)
+  :depends-on (cl-json
+               sqlite)
   :components ((:module "src"
                 :components
                 ((:file "wasmcloud")

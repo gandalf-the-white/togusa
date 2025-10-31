@@ -1,15 +1,18 @@
 (defpackage :wasmcloud
   (:use :cl)
-  (:export :make-provider :make-worker :make-leaf
-   :make-component :make-link :make-spread
-           :make-cluster :make-manifest
-           :make-json-object :to-json
-           :json-to-string-manifest :save-manifest))
+  (:export :make-capability :make-worker
+           :make-leaf :make-component
+           :make-link :make-spread
+           :test-spread :make-cluster
+           :make-manifest :make-json-object
+           :to-json :json-to-string-manifest
+           :save-manifest :add-spreads
+           :make-trait))
 
 (in-package :wasmcloud)
 
 ;; ================================================
-;; T O O L S 
+;; C O M M O N  
 ;; ================================================
 
 (defun make-json-object (&rest pairs)
@@ -109,21 +112,40 @@
          :type t)
    (image :initarg :image
           :accessor image
-          :type string))
-  (:documentation "Base to the component or provider"))
+          :type string)
+   (traits :initarg :traits
+           :accessor traits
+           :initform (list)
+           :type list))
+  (:documentation "Base to the component or capability"))
 
 (defclass component (instance)
   ((replicas :initarg :replicas
              :accessor replicas
              :initform 1
-             :type integer)
-   (traits :initarg :traits
-           :accessor traits
-           :type list))
+             :type integer))
   (:documentation "Component definition"))
 
-(defclass provider (instance)
+(defclass capability (instance)
   ())
+
+(defclass trait ()
+  ((cat :initarg :cat
+        :accessor cat
+        :type list)
+   (properties :initarg :properties
+               :accessor properties
+               :type list))
+  (:documentation "Traitements object"))
+
+(defclass spreadscaler ()
+  ((instances :initarg :instances
+              :accessor instances
+              :type interger)
+   (properties :initarg :properties
+               :accessor properties
+               :type list))
+  (:documentation "Define a set to component"))
 
 (defclass spread ()
   ((name :initarg :name
@@ -137,14 +159,15 @@
   (:documentation "Define the balance with zone areas"))
 
 (defclass link ()
-  ((name :initarg :name
-         :accessor link-name)
-   (source :initarg :source
-           :accessor link-source
-           :type string)
+  ((cat :initarg :cat
+        :accessor cat)
+   (interfaces :initarg :interfaces
+               :accessor initerfaces
+               :type list)
    (target :initarg :target
-           :accessor link-target
-           :type string)))
+           :accessor target
+           :type string))
+  (:documentation "Link definition"))
 
 (defmethod make-component (&key name image replicas traits)
   (make-instance 'component :name name
@@ -152,28 +175,36 @@
                             :replicas replicas
                             :traits (or traits (list))))
 
-(defmethod make-provider (&key name image)
-  (make-instance 'provider :name name
-                           :image image))
+(defmethod make-capability (&key name image traits)
+  (make-instance 'capability :name name
+                             :image image
+                             :traits (or traits (list))))
+
+(defmethod make-trait (&key cat properties)
+  (make-instance 'trait :cat cat :properties properties))
 
 (defmethod make-spread (&key name weight requirement)
   (make-instance 'spread :name name :weight weight :requirement requirement))
 
-(defmethod make-link (&key name source target)
-  (make-instance 'link :name name
-                       :source source
-                       :target target))
+(defmethod make-link (&key cat interfaces target)
+  (make-instance 'link :cat "link" :interfaces interfaces :target target))
 
 (defmethod to-json ((c component))
   (make-json-object :name (name c)
                     :type "component"
                     :image (image c)
                     :replicas (replicas c)
-                    :traits (mapcar #'to-json (traits c))))
+                    :traits (mapcar #'to-json (traits c))
+                    ))
 
-(defmethod to-json ((p provider))
+(defmethod to-json ((p capability))
   (make-json-object :name (name p)
-                    :image (image p)))
+                    :image (image p)
+                    :traits (mapcar #'to-json (traits p))))
+
+(defmethod to-json ((r trait))
+  (make-json-object :type (cat r)
+                    :properties (mapcar #'to-json (properties r))))
 
 (defmethod to-json ((s spread))
   (make-json-object :name (name s)
@@ -181,9 +212,7 @@
                     :requirement (make-json-object :zone (requirement s))))
 
 (defmethod to-json ((l link))
-  (make-json-object :name (name l)
-                    :source (source l)
-                    :target (target l)))
+  (make-json-object :type "link" :interfaces (interfaces l) :target (target l)))
 
 ;; ================================================
 ;;  M A N I F E S T
@@ -198,39 +227,82 @@
    (components :initarg :components
                :accessor components
                :type list)
-   (providers :initarg :providers
-              :accessor providers
-              :type list)
-   (links :initarg :links
-          :accessor links
-          :type list))
+   ;; (capabilitys :initarg :capabilitys
+   ;; :accessor capabilitys
+   ;; :type list)
+   ;; (links :initarg :links
+   ;; :accessor links
+   ;; :type list)
+   )
   (:documentation "Manifest"))
 
-(defmethod make-manifest (&key name cluster components providers links)
+(defmethod make-manifest (&key name cluster components capabilitys links)
   (make-instance 'manifest :name name
                            :cluster cluster
                            :components components
-                           :providers providers
-                           :links links))
+                           ;; :capabilitys capabilitys
+                           ;; :links links)
+                           )
 
-(defmethod to-json ((m manifest))
-  (make-json-object :api_version "oam.wasmcloud.dev/v1"
-                    :kind "Application"
-                    :metadata (make-json-object :name (manifest-name m))
-                    :cluster (to-json (cluster m))
-                    :components (mapcar #'to-json (components m))
-                    :providers (mapcar #'to-json (providers m))))
+  (defmethod to-json ((m manifest))
+    (make-json-object :api_version "oam.wasmcloud.dev/v1"
+                      :kind "Application"
+                      :metadata (make-json-object :name (manifest-name m))
+                      :cluster (to-json (cluster m))
+                      :components (mapcar #'to-json (components m))))
+  ;; :capabilitys (mapcar #'to-json (capabilitys m))))
 
-;; ================================================
-;;  T O O L S
-;; ================================================
+  ;; ================================================
+  ;;  S P R E A D   A N D   L I N K
+  ;; ================================================
 
-(defmethod json-to-string-manifest (m)
-  (let ((data (to-json m)))
-    (cl-json:encode-json-to-string data)))
+  (defmethod add-spreads (&key name components spreads)
+    (mapcar (lambda (c)
+              (if (string= (name c) name)
+                  (setf (properties (traits c)) (list :spreadscaler spreads))))
+            components))
 
-(defmethod save-manifest (m pathname)
-  (with-open-file (out pathname :direction :output
-                                :if-exists :supersede
-                                :if-does-not-exist :create)
-    (write-sequence (json-to-string-manifest m) out)))
+  (defun test-spread (spreads)
+    (let* ((total-weight (apply #'+ (mapcar #'weight spreads)))
+           (valid (= 100 total-weight)))
+      valid))
+
+  (defmethod add-link (&key node link)
+    (cond ((string= (name node) (source link))
+           (append (make-json-object :type "link"
+                                     :properties (list :target (target link)))
+                   (traits node)))
+          ((string= (name node) (target link))
+           (append (make-json-object :type "link"
+                                     :properties (list :target (source link)))
+                   (traits node)))))
+
+  ;; ================================================
+  ;;  T O O L S
+  ;; ================================================
+
+  (defmethod json-to-string-manifest ((m manifest))
+    (let ((data (to-json m)))
+      (cl-json:encode-json-to-string data)))
+  ;; (:documentation "Just stringify the manifest"))
+
+  (defmethod save-manifest ((m manifest) pathname)
+    (with-open-file (out pathname :direction :output
+                                  :if-exists :supersede
+                                  :if-does-not-exist :create)
+      (write-sequence (json-to-string-manifest m) out)))
+
+  ;; (defmethod save-manifest-to-db ((m manifest) &optional (path db:*manifest-db*))
+  ;;   (sqlite:with-open-database (db path)
+  ;;     (apply #'sqlite:execute-non-query
+  ;;            db
+  ;;            "INSERT INTO manifest (name, version, description) VALUES (?, ?, ?);"
+  ;;            (list (manifest-name m) (manifest-version m) (manifest-description m)))
+  ;;     (let* ((manifest-id (sqlite:last-insert-rowid db))
+  ;;            (cluster (manifest-cluster m)))
+  ;;       ;; cluster
+  ;;       (apply #'sqlite:execute-non-query
+  ;;              db
+  ;;              "INSERT INTO cluster (name, nats_url, manifest_id) VALUES (?, ?, ?);"
+  ;;              (list (cluster-name cluster) (cluster-nats-url cluster) manifest-id))
+  ;;       )))

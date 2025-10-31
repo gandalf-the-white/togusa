@@ -1,5 +1,31 @@
-* Togusa04 
+#+title: Wasmcloud on Lisp
+* Introduction
+* Diagram
+#+begin_src plantuml :file ./images/diagram.svg
+!theme spacelab
+scale 0.8
+instance <|-- component
+instance <|-- capability
+instance *-- trait
+trait <|-- spreadscaler
+trait <|-- link
+spreadscaler *-- spread
+instance : name
+instance : image
+instance : []traits
+trait : type
+spread : name
+spread : weight
+spread : zone
+component : replicas
+spreadscaler : instances
+spreadscaler : []properties
+link : target
+link : namespace
+link : []interfaces
+link : target_config
+link : source_config
+#+end_src
 
-** Usage
-
-** Installation
+#+RESULTS:
+[[file:./images/diagram.svg]]
