@@ -1,7 +1,7 @@
 #+TITLE: Wasmcloud on Lisp
 #+AUTHOR: Spike Spiegel
 #+INTRODUCTION: Propose to build a wasmcloud manifest with LISP
-
+#+OPTIONS: 
 
 * Introduction
 * Diagram

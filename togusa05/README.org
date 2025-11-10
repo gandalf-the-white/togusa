@@ -29,3 +29,46 @@ link : source_config
 
 #+RESULTS:
 [[file:./images/diagram.svg]]
+
+* Diagram
+** Database
+#+begin_src plantuml :file ./images/database.svg  
+!theme spacelab
+scale 0.8
+clusters *-- cluster_nodes
+nodes *-- node_labels
+cluster_node -- clusters
+cluster_node -- nodes
+capability *-- traits
+component *-- traits
+manifest *-- components
+components <|-- component
+components <|-- capability
+link *-- config
+traits *-- spreadscaler
+traits *-- link
+spreadscaler *-- spread
+cluster_manifest -- manifest
+cluster_manifest -- clusters
+manifest : name
+component : image
+component : name
+spread : name
+spread : weight
+spread : zone
+link : target
+link : pack
+link : namespace
+link : interfaces
+clusters : name
+clusters : nats_url
+nodes : id
+nodes : type
+nodes : zone
+node_labels : label
+config : name
+config : address
+#+end_src
+
+#+RESULTS:
+[[file:./images/database.svg]]

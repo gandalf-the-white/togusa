@@ -1,5 +1,16 @@
 (defpackage :wasmcloud
-  (:use :cl))
+  (:use :cl)
+  (:export :make-worker :make-leaf
+           :make-cluster :worker
+           :leaf :cluster
+           :node :node-id
+           :node-label :node-zone
+           :cluster-name :cluster-nats-url
+           :cluster-leafs :cluster-workers
+           :manifest :make-manifest
+           :manifest-name :manifest-cluster
+           :manifest-components))
+
 
 (in-package :wasmcloud)
 
@@ -255,13 +266,13 @@
 
 (defclass manifest ()
   ((name :initarg :name
-         :accessor name
+         :accessor manifest-name
          :type string)
    (cluster :initarg :cluster
-            :accessor cluster
+            :accessor manifest-cluster
             :type CLUSTER)
    (components :initarg :components
-               :accessor components
+               :accessor manifest-components
                :type list))
   (:documentation "Manifest object"))
 
@@ -273,9 +284,9 @@
 (defmethod to-json ((m manifest))
   (make-json-object :api_version "oam.wasmcloud.dev/v1"
                     :kind "Application"
-                    :metadata (make-json-object :name (name m))
-                    :cluster (to-json (cluster m))
-                    :components (mapcar #'to-json (components m))))
+                    :metadata (make-json-object :name (manifest-name m))
+                    :cluster (to-json (manifest-cluster m))
+                    :components (mapcar #'to-json (manifest-components m))))
 
 ;; ================================================
 ;;  T O O L S
@@ -297,7 +308,7 @@
     (write-sequence (json-to-string-manifest m) out)))
 
 ;; ================================================
-;;  E X A M P L E
+;;  M E T H O D
 ;; ================================================
 
 (defun test ()
@@ -326,5 +337,5 @@
                                                                      :image "ghcr.io/wasmcloud/http-server:0.27.0"
                                                                      :traits (list link))))))
     (format t "manifest: ~a" manifest)
-    (save-manifest manifest "../datas/save.json") 
+    (save-manifest manifest "./datas/save.json") 
     link))
