@@ -9,7 +9,17 @@
            :cluster-leafs :cluster-workers
            :manifest :make-manifest
            :manifest-name :manifest-cluster
-           :manifest-components))
+           :manifest-components :make-spread
+           :spreadscaler :spreadscaler-instances
+           :make-spreadscaler :spread
+           :spread-name :spread-weight
+           :spread-zone :instance
+           :instance-name :instance-image
+           :component-replicas :component
+           :make-component :link
+           :make-link :link-target
+           :config :make-config
+           :config-name :config-address))
 
 
 (in-package :wasmcloud)
@@ -116,21 +126,21 @@
 
 (defclass instance ()
   ((name :initarg :name
-         :accessor name
+         :accessor instance-name
          :initform nil
          :type t)
    (image :initarg :image
-          :accessor image
+          :accessor instance-image
           :type string)
    (traits :initarg :traits
-           :accessor traits
+           :accessor instance-traits
            :initform (list)
            :type list))
   (:documentation "Base to the component or capability"))
 
 (defclass component (instance)
   ((replicas :initarg :replicas
-             :accessor replicas
+             :accessor component-replicas
              :initform 1
              :type integer))
   (:documentation "Component definition"))
@@ -150,18 +160,17 @@
                              :traits (or traits (list))))
 
 (defmethod to-json ((c component))
-  (make-json-object :name (name c)
+  (make-json-object :name (instance-name c)
                     :type "component"
-                    :image (image c)
-                    :replicas (replicas c)
-                    :traits (mapcar #'to-json (traits c))
-                    ))
+                    :image (instance-image c)
+                    :replicas (component-replicas c)
+                    :traits (mapcar #'to-json (instance-traits c))))
 
 (defmethod to-json ((p capability))
-  (make-json-object :name (name p)
+  (make-json-object :name (instance-name p)
                     :type "capability"
-                    :image (image p)
-                    :traits (mapcar #'to-json (traits p))))
+                    :image (instance-image p)
+                    :traits (mapcar #'to-json (instance-traits p))))
 
 ;; ================================================
 ;;  S P R E A D   A N D   L I N K
@@ -169,49 +178,49 @@
 
 (defclass spreadscaler ()
   ((instances :initarg :instances
-              :accessor instances
+              :accessor spreadscaler-instances
               :type integer)
    (spread :initarg :spread
-           :accessor spread
+           :accessor spreadscaler-spread
            :type SPREAD))
   (:documentation "Spreadscaler set spreads balance"))
 
 (defclass spread ()
   ((name :initarg :name
-         :accessor name
+         :accessor spread-name
          :type string)
    (weight :initarg :weight
-           :accessor weight
+           :accessor spread-weight
            :type integer)
    (zone :initarg :zone
-         :accessor zone
+         :accessor spread-zone
          :type string))
   (:documentation "Define the weight per instance"))
 
 (defclass link ()
   ((target :initarg :target
-           :accessor target
+           :accessor link-target
            :type string)
    (pack :initarg :pack
-         :accessor pack
+         :accessor link-pack
          :type string)
    (namespace :initarg :namespace
-              :accessor namespace
+              :accessor link-namespace
               :type string)
    (interfaces :initarg :interfaces
-               :accessor interfaces
+               :accessor link-interfaces
                :type list)
    (source :initarg :source
-           :accessor source
+           :accessor link-source
            :type CONFIG))
   (:documentation "Define the target connection"))
 
 (defclass config ()
   ((name :initarg :name
-         :accessor name
+         :accessor config-name
          :type string)
    (address :initarg :address
-            :accessor address
+            :accessor config-address
             :type string))
   (:documentation "Define the configuration for a link"))
 
@@ -237,28 +246,28 @@
 
 (defmethod to-json ((s spreadscaler))
   (make-json-object :type "spreadscaler"
-                    :instances (instances s)
-                    :properties (list  :instances (instances s)
-                                       :spread (mapcar #'to-json (spread s)))))
+                    :instances (spreadscaler-instances s)
+                    :properties (list  :instances (spreadscaler-instances s)
+                                       :spread (mapcar #'to-json (spreadscaler-spread s)))))
 
 (defmethod to-json ((s spread))
-  (make-json-object :name (name s)
-                    :weight (weight s)
-                    :requirement (list :zone (zone s))))
+  (make-json-object :name (spread-name s)
+                    :weight (spread-weight s)
+                    :requirement (list :zone (spread-zone s))))
 
 (defmethod to-json ((l link))
-  (let ((properties (append (list :target (target l)
-                                  :namespace (namespace l)
-                                  :package (pack l)
-                                  :interfaces (interfaces l))
-                            (if (source l)
-                                (list :source (to-json (source l)))))))
+  (let ((properties (append (list :target (link-target l)
+                                  :namespace (link-namespace l)
+                                  :package (link-pack l)
+                                  :interfaces (link-interfaces l))
+                            (if (link-source l)
+                                (list :source (to-json (link-source l)))))))
     (make-json-object :type "link"
                       :properties properties)))
 
 (defmethod to-json ((c config))
-  (make-json-object :config (list :name (name c)
-                                  :properties (list :address (address c)))))
+  (make-json-object :config (list :name (config-name c)
+                                  :properties (list :address (config-address c)))))
 
 ;; ================================================
 ;;  M A N I F E S T
