@@ -1,0 +1,86 @@
+#+title: Wasmcloud on Lisp
+* Introduction
+* Diagram
+#+begin_src plantuml :file ./images/diagram.svg
+!theme spacelab
+scale 0.8
+instance <|-- component
+instance <|-- capability
+instance *-- trait
+trait <|-- spreadscaler
+trait <|-- link
+spreadscaler *-- spread
+instance : name
+instance : image
+instance : []traits
+trait : type
+spread : name
+spread : weight
+spread : zone
+component : replicas
+spreadscaler : instances
+spreadscaler : []properties
+link : target
+link : namespace
+link : []interfaces
+link : target_config
+link : source_config
+#+end_src
+
+#+RESULTS:
+[[file:./images/diagram.svg]]
+
+* Diagram
+** Database
+#+begin_src plantuml :file ./images/database.svg  
+!theme spacelab
+scale 0.8
+clusters *-- cluster_nodes
+nodes *-- node_labels
+cluster_node -- clusters
+cluster_node -- nodes
+capability *-- traits
+component *-- traits
+manifest *-- components
+components <|-- component
+components <|-- capability
+link *-- config
+traits *-- spreadscaler
+traits *-- link
+spreadscaler *-- spread
+cluster_manifest -- manifest
+cluster_manifest -- clusters
+manifest : name
+component : id
+component : image
+component : name
+component : replicas
+component : manifest
+capability : id
+capability : image
+capability : name
+capability : replicas
+capability : manifest
+spreadscaler : id
+spreadscaler : instance
+spreadscaler : component_id
+spread : name
+spread : weight
+spread : zone
+spread : spreadscaler_id
+link : target
+link : pack
+link : namespace
+link : interfaces
+clusters : name
+clusters : nats_url
+nodes : id
+nodes : type
+nodes : zone
+node_labels : label
+config : name
+config : address
+#+end_src
+
+#+RESULTS:
+[[file:./images/database.svg]]

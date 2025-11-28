@@ -1,0 +1,154 @@
+# POST Create a manifest
+POST http://localhost:8080/api/manifest
+Content-Type: application/json
+{
+    "name":"example-app",
+    "cluster":{
+        "name":"wasmcloud",
+        "nats-url":"nats://localhost:4222"
+    }
+}
+
+# DELETE a manifest
+DELETE http://localhost:8080/api/manifest
+Content-Type: application/json
+{
+    "name": "example-app"
+}
+
+# POST Add component
+POST http://localhost:8080/api/component
+Content-Type: application/json
+{
+    "manifest":"example-app",
+    "name":"http-component",
+    "image":"ghcr.io/wasmcloud/components/dog-fetcher-rust:0.1.1",
+    "replicas":4
+}
+
+
+# POST Add config
+POST http://localhost:8080/api/config
+Content-Type: application/json
+{
+    "manifest":"example-app",
+    "component":"http-component",
+    "name":"default-http",
+    "address":"0.0.0.0:8080"
+}
+
+# PUT Modify component
+PUT http://localhost:8080/api/component
+Content-Type: application/json
+{
+    "manifest": "example-app",
+    "name": "http-component",
+    "image": "ghcr.io/wasmcloud/components/dog-fetcher-rust:0.2.0",
+    "replicas": 10
+}
+
+# ----------------------------------------------------
+# S P R E A D S C A L E R 
+# ----------------------------------------------------
+
+# DELETE spreadscaler
+DELETE http://localhost:8080/api/spreadscaler
+Content-Type: application/json
+{
+    "manifest": "example-app",
+    "component": "http-component"
+}
+
+# POST new spreadscaler
+POST http://localhost:8080/api/spreadscaler
+Content-Type: application/json
+{
+    "manifest": "example-app",
+    "component": "http-component",
+    "instances": 4,
+    "spread": [
+              { "name": "zone-a", "weight": 60, "zone": "zone-a" },
+              { "name": "zone-b", "weight": 40, "zone": "zone-b" }
+    ]
+}
+
+# ----------------------------------------------------
+# L I N K 
+# ----------------------------------------------------
+
+# POST Add link
+POST http://localhost:8080/api/link
+Content-Type: application/json
+{
+    "manifest":"example-app",
+    "component":"http-component",
+    "target":"http-component",
+    "namespace":"wasi",
+    "package":"http",
+    "interfaces":[
+        "incoming-handler"
+    ]
+}
+
+# DELETE link
+DELETE http://localhost:8080/api/link
+Content-Type: application/json
+{
+    "manifest": "example-app",
+    "component": "http-component",
+    "target": "http-component"
+}
+
+# PUT Modify link config
+PUT http://localhost:8080/api/link
+Content-Type: application/json
+{
+    "manifest": "example-app",
+    "component": "http-component",
+    "target": "http-component",
+    "config": {
+              "name": "default-http",
+              "address": "0.0.0.0:8081"
+    }
+}
+
+# PUT Modify interface and namspace
+PUT http://localhost:8080/api/link
+Content-Type: application/json
+{
+    "manifest": "example-app",
+    "component": "http-component",
+    "target": "http-component",
+    "namespace":"wasi",
+    "package":"http",
+    "interfaces":[
+        "incoming-handler"
+    ]
+}
+
+# PUT Modify target
+PUT http://localhost:8080/api/link
+Content-Type: application/json
+{
+    "manifest": "example-app",
+    "component": "http-component",
+    "target": "http-component",
+    "new-target": "other-component"
+}
+
+# ----------------------------------------------------
+# G E T
+# ----------------------------------------------------
+
+# GET Manifests
+GET http://localhost:8080/api/manifests
+
+# GET json manifest
+GET http://localhost:8080/api/manifest?name=example-app
+
+# GET json spreadscaler
+GET http://localhost:8080/api/spreadscaler?manifest=example-app&component=http-component
+
+# GET json link
+GET http://localhost:8080/api/link?manifest=example-app&component=http-component
+

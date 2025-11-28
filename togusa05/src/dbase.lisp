@@ -2,7 +2,7 @@
   (:use :cl :wasmcloud)
   (:export :init-db :*manifest-db*
            :with-db :save-node
-           :save-cluster))
+           :save-cluster :load-node))
 
 (in-package :dbase)
 

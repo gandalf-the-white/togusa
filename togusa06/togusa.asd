@@ -2,8 +2,8 @@
 
 (defsystem "togusa"
   :version "0.0.1"
-  :author ""
-  :license ""
+  :author "spike spiegel"
+  :license "MIT"
   :depends-on (:cl-json
                :sqlite
                :hunchentoot
@@ -11,9 +11,11 @@
                :yason)
   :components ((:module "src"
                 :components
-                ((:file "dbase" :depends-on ("wasmcloud"))
+                ((:file "package")
+                 (:file "utils")
                  (:file "wasmcloud")
-                 (:file "api" :depends-on ("dbase" "wasmcloud"))
+                 (:file "dbase")
+                 (:file "api")
                  (:file "main"))))
   :description ""
   :in-order-to ((test-op (test-op "togusa/tests"))))
